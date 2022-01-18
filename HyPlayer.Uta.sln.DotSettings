@@ -1,0 +1,34 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Boolean x:Key="/Default/CodeInspection/CodeAnnotations/NamespacesWithAnnotations/=HyPlayer_002EUta_002EAnnotations/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/@KeyIndexDefined">True</s:Boolean>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Applicability/=Live/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Description/@EntryValue">Event To Controller</s:String>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=NAME/@KeyIndexDefined">True</s:Boolean>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=NAME/Order/@EntryValue">0</s:Int64>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARAM1/@KeyIndexDefined">True</s:Boolean>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARAM1/Order/@EntryValue">2</s:Int64>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARAM2/@KeyIndexDefined">True</s:Boolean>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARAM2/Order/@EntryValue">3</s:Int64>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARAMS/@KeyIndexDefined">False</s:Boolean>
+	
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=PARATMERS/@KeyIndexDefined">False</s:Boolean>
+	
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=RETURNTYPE/@KeyIndexDefined">False</s:Boolean>
+	
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=Task/@KeyIndexDefined">False</s:Boolean>
+	
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=TYPE/@KeyIndexDefined">True</s:Boolean>
+	<s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Field/=TYPE/Order/@EntryValue">1</s:Int64>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/IsBlessed/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Reformat/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Scope/=C3001E7C0DA78E4487072B7E050D86C5/@KeyIndexDefined">True</s:Boolean>
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Scope/=C3001E7C0DA78E4487072B7E050D86C5/CustomProperties/=minimumLanguageVersion/@EntryIndexedValue">2.0</s:String>
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Scope/=C3001E7C0DA78E4487072B7E050D86C5/Type/@EntryValue">InCSharpFile</s:String>
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Shortcut/@EntryValue">etc</s:String>
+	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/ShortenQualifiedReferences/@EntryValue">True</s:Boolean>
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=322F4D602B33B740A7CDD7AC3D76DDCE/Text/@EntryValue">public event $NAME$BeforeEvent On$NAME$Before;
+public delegate Task&lt;bool&gt; $NAME$BeforeEvent($PARAM1$);
+
+public event $NAME$AfterEvent On$NAME$After;
+public delegate Task$TYPE$ $NAME$AfterEvent($PARAM2$);
+$END$</s:String></wpf:ResourceDictionary>

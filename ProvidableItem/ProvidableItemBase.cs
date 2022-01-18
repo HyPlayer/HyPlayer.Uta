@@ -72,7 +72,7 @@ public abstract class ProvidableItemBase
     {
         ProviderId = providerId;
         TypeId = InProviderId.Substring(3, 2);
-        ActualId = InProviderId[5..]; // Rider 给的语法特性 , 等同于 SubString(5)
+        ActualId = InProviderId.Substring(5);
         Name = string.Empty;
     }
 
@@ -82,9 +82,9 @@ public abstract class ProvidableItemBase
     /// <param name="Id">完整唯一 Id</param>
     public ProvidableItemBase(string Id)
     {
-        ProviderId = Id[..3];
+        ProviderId = Id.Substring(0,3);
         TypeId = Id.Substring(3, 2);
-        ActualId = Id[5..];
+        ActualId = Id.Substring(5);
         Name = string.Empty;
     }
 

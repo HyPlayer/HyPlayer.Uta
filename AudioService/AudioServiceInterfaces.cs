@@ -3,7 +3,7 @@
 /// <summary>
 /// 允许后台播放
 /// </summary>
-public interface IBackgroundPlayable
+public interface IBackgroundPlayableService
 {
     /// <summary>
     /// 进入后台, 可在此处回收不必要的内存等东西.
@@ -22,7 +22,7 @@ public interface IBackgroundPlayable
 /// <summary>
 /// 可以更改输出设备
 /// </summary>
-public interface IOutputDeviceChangeable
+public interface IOutputDeviceChangeableService
 {
     /// <summary>
     /// 获取可输出设备列表
@@ -46,7 +46,7 @@ public abstract class OutputDeviceBase
 /// <summary>
 /// 允许更改播放更改播放倍速 (x1.0)
 /// </summary>
-public interface IPlaybackRateChangeable
+public interface IPlaybackRateChangeableService
 {
     /// <summary>
     /// 更改 AudioService 播放倍速
@@ -59,7 +59,7 @@ public interface IPlaybackRateChangeable
 /// <summary>
 /// 允许更改播放输出的音量
 /// </summary>
-public interface IVolumeChangeable
+public interface IVolumeChangeableService
 {
     /// <summary>
     /// 更改 AudioService 总音量
@@ -67,4 +67,12 @@ public interface IVolumeChangeable
     /// <param name="volume">目标音量 0~100</param>
     /// <returns></returns>
     public Task ChangeVolume(int volume);
+}
+
+/// <summary>
+/// 允许进行进度控制
+/// </summary>
+public interface IAudioTicketSeekableService
+{
+    public Task SeekAudioTicket(AudioTicketBase audioTicket, TimeSpan position);
 }

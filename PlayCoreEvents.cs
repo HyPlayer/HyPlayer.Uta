@@ -79,14 +79,16 @@ public class PlayCoreEvents
 
     /// <summary>
     /// 获取下一首的播放 Ticket
+    /// 过时
     /// </summary>
+    [Obsolete]
     public event DoGetNextTicketEvent OnDoGetNextTicket;
-
-    public delegate Task<AudioTicketBase?> DoGetNextTicketEvent(object mediaSource);
-
-    public Task<AudioTicketBase?> RaiseDoGetNextTicketEvent(object mediaSource)
+    [Obsolete]
+    public delegate Task<AudioTicketBase?> DoGetNextTicketEvent();
+    [Obsolete]
+    public Task<AudioTicketBase?> RaiseDoGetNextTicketEvent()
     {
-        return OnDoGetNextTicket?.Invoke(mediaSource) ?? Task.FromResult<AudioTicketBase?>(null);
+        return OnDoGetNextTicket?.Invoke() ?? Task.FromResult<AudioTicketBase?>(null);
     }
 
     /// <summary>
@@ -171,22 +173,40 @@ public class PlayCoreEvents
         return OnStopAfter?.Invoke(args) ?? Task.CompletedTask;
     }
 
-    public event FailedBeforeEvent OnFailedBefore;
+    public event FailedEvent OnFailed;
 
-    public delegate Task FailedBeforeEvent(AudioTicketOperationEventArgs args);
+    public delegate Task FailedEvent(FailedEventArgs args);
 
-    public Task RaiseFailedBeforeEvent(AudioTicketOperationEventArgs args)
+    public Task RaiseFailedEvent(FailedEventArgs args)
     {
-        return OnFailedBefore?.Invoke(args) ?? Task.CompletedTask;
+        return OnFailed?.Invoke(args) ?? Task.CompletedTask;
     }
+    
+    public event EndedEvent OnEnded;
 
-    public event FailedAfterEvent OnFailedAfter;
+    public delegate Task EndedEvent(AudioTicketOperationEventArgs args);
 
-    public delegate Task FailedAfterEvent(AudioTicketOperationEventArgs args);
-
-    public Task RaiseFailedAfterEvent(AudioTicketOperationEventArgs args)
+    public Task RaiseEndedEvent(AudioTicketOperationEventArgs args)
     {
-        return OnFailedAfter?.Invoke(args) ?? Task.CompletedTask;
+        return OnEnded?.Invoke(args) ?? Task.CompletedTask;
+    }
+    
+    public event BufferingEvent OnBuffering;
+
+    public delegate Task BufferingEvent(EventArgs args);
+
+    public Task RaiseBufferingEvent(EventArgs args)
+    {
+        return OnBuffering?.Invoke(args) ?? Task.CompletedTask;
+    }
+    
+    public event BufferedEvent OnBuffered;
+
+    public delegate Task BufferedEvent(AudioTicketOperationEventArgs args);
+
+    public Task RaiseBufferedEvent(AudioTicketOperationEventArgs args)
+    {
+        return OnBuffered?.Invoke(args) ?? Task.CompletedTask;
     }
 
     public event ChangePlayItemBeforeEvent OnChangePlayItemBefore;
@@ -207,22 +227,22 @@ public class PlayCoreEvents
         return OnChangePlayItemAfter?.Invoke(args) ?? Task.CompletedTask;
     }
 
-    public event ChangePositionBeforeEvent OnChangePositionBefore;
+    public event SeekBeforeEvent OnSeekBefore;
 
-    public delegate Task ChangePositionBeforeEvent(ChangePositionEventArgs args);
+    public delegate Task SeekBeforeEvent(AudioTicketSeekOperationEventArgs args);
 
-    public Task RaiseChangePositionBeforeEvent(ChangePositionEventArgs args)
+    public Task RaiseSeekBeforeEvent(AudioTicketSeekOperationEventArgs args)
     {
-        return OnChangePositionBefore?.Invoke(args) ?? Task.CompletedTask;
+        return OnSeekBefore?.Invoke(args) ?? Task.CompletedTask;
     }
 
-    public event ChangePositionAfterEvent OnChangePositionAfter;
+    public event SeekAfterEvent OnSeekAfter;
 
-    public delegate Task ChangePositionAfterEvent(ChangePositionEventArgs args);
+    public delegate Task SeekAfterEvent(AudioTicketSeekOperationEventArgs args);
 
-    public Task RaiseChangePositionAfterEvent(ChangePositionEventArgs args)
+    public Task RaiseSeekAfterEvent(AudioTicketSeekOperationEventArgs args)
     {
-        return OnChangePositionAfter?.Invoke(args) ?? Task.CompletedTask;
+        return OnSeekAfter?.Invoke(args) ?? Task.CompletedTask;
     }
 
     public event ChangeVolumeBeforeEvent OnChangeVolumeBefore;
@@ -316,24 +336,62 @@ public class PlayCoreEvents
     }
 
     public event LoadNowPlayingItemMediaBeforeEvent OnLoadNowPlayingItemMediaBefore;
-    
+
     public delegate Task LoadNowPlayingItemMediaBeforeEvent(LoadNowPlayingItemMediaEventArgs args);
-    
+
     public Task RaiseLoadNowPlayingItemMediaBeforeEvent(LoadNowPlayingItemMediaEventArgs args)
     {
         return OnLoadNowPlayingItemMediaBefore?.Invoke(args) ?? Task.CompletedTask;
     }
-    
+
     public event LoadNowPlayingItemMediaAfterEvent OnLoadNowPlayingItemMediaAfter;
-    
+
     public delegate Task LoadNowPlayingItemMediaAfterEvent(LoadNowPlayingItemMediaEventArgs args);
-    
+
     public Task RaiseLoadNowPlayingItemMediaAfterEvent(LoadNowPlayingItemMediaEventArgs args)
     {
         return OnLoadNowPlayingItemMediaAfter?.Invoke(args) ?? Task.CompletedTask;
     }
 
     #endregion
+}
+
+public class SimpleEventArgs : EventArgs
+{
+    public SimpleEventArgs(object sender)
+    {
+        Sender = sender;
+    }
+
+    public object Sender { get; }
+}
+
+public class FailedEventArgs : EventArgs
+{
+    public Exception Exception { get; }
+    public object Sender { get; }
+
+    public FailedEventType Type { get; }
+
+    public FailedEventArgs(object sender, Exception exception, FailedEventType type)
+    {
+        Sender = sender;
+        Exception = exception;
+        Type = type;
+    }
+
+    public FailedEventArgs(object sender, string message, FailedEventType type)
+    {
+        Sender = sender;
+        Exception = new Exception(message);
+        Type = type;
+    }
+}
+
+public enum FailedEventType
+{
+    CreatingAudioService,
+    LoadAudioTicket
 }
 
 public class AudioTicketOperationEventArgs : EventArgs
@@ -346,12 +404,27 @@ public class AudioTicketOperationEventArgs : EventArgs
 
     public object Sender { get; }
     public AudioTicketBase AudioTicket { get; }
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
+}
+
+public class AudioTicketSeekOperationEventArgs : EventArgs
+{
+    public AudioTicketSeekOperationEventArgs(object sender, AudioTicketBase audioTicket, TimeSpan seekPosition)
+    {
+        Sender = sender;
+        AudioTicket = audioTicket;
+        SeekPosition = seekPosition;
+    }
+
+    public object Sender { get; }
+    public AudioTicketBase AudioTicket { get; }
+    public TimeSpan SeekPosition { get; }
+    public bool BreakEvent = false;
 }
 
 public class ChangePlayItemEventArgs : EventArgs
 {
-    public ChangePlayItemEventArgs(object sender, SingleSongBase oldSong, SingleSongBase newSong, int oldIndex,
+    public ChangePlayItemEventArgs(object sender, SingleSongBase? oldSong, SingleSongBase? newSong, int oldIndex,
         int newIndex)
     {
         Sender = sender;
@@ -362,26 +435,12 @@ public class ChangePlayItemEventArgs : EventArgs
     }
 
     public object Sender { get; }
-    public SingleSongBase OldSong { get; }
-    public SingleSongBase NewSong { get; }
+    public SingleSongBase? OldSong { get; }
+    public SingleSongBase? NewSong { get; }
     public int OldIndex { get; }
     public int NewIndex { get; set; }
 
-    public bool BreakEvent = true;
-}
-
-public class ChangePositionEventArgs : EventArgs
-{
-    public ChangePositionEventArgs(object sender, TimeSpan position)
-    {
-        Sender = sender;
-        Position = position;
-    }
-
-    public object Sender { get; }
-    public TimeSpan Position { get; }
-
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class ChangeVolumeEventArgs : EventArgs
@@ -395,7 +454,7 @@ public class ChangeVolumeEventArgs : EventArgs
     public object Sender { get; }
     public int Volume { get; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class AddPlayItemsEventArgs : EventArgs
@@ -419,7 +478,7 @@ public class AddPlayItemsEventArgs : EventArgs
 
     public int Index { get; set; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class RemovePlayItemEventArgs : EventArgs
@@ -443,7 +502,7 @@ public class RemovePlayItemEventArgs : EventArgs
 
     public int Index { get; set; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class RemoveAllItemsEventArgs : EventArgs
@@ -455,7 +514,7 @@ public class RemoveAllItemsEventArgs : EventArgs
 
     public object Sender { get; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class ChangePlaySourceEventArgs : EventArgs
@@ -471,7 +530,7 @@ public class ChangePlaySourceEventArgs : EventArgs
     public SongContainerBase? OldPlaySource { get; }
     public SongContainerBase NewPlaySource { get; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }
 
 public class LoadNowPlayingItemMediaEventArgs : EventArgs
@@ -485,5 +544,5 @@ public class LoadNowPlayingItemMediaEventArgs : EventArgs
     public object Sender { get; }
     public SingleSongBase Song { get; }
 
-    public bool BreakEvent = true;
+    public bool BreakEvent = false;
 }

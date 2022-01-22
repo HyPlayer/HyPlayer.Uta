@@ -9,10 +9,32 @@ using HyPlayer.Uta.ProvidableItem.SongContainer;
 
 namespace HyPlayer.Uta;
 
-public class PlayCore : INotifyPropertyChanged
+public sealed class PlayCore : INotifyPropertyChanged
 {
     public PlayCore()
     {
+        AudioServiceStatus = new AudioServiceStatus();
+        // 监听事件
+        EventListener.OnDoPlay += ticket => AudioService?.PlayAudioTicketAsync(ticket!) ?? Task.CompletedTask;
+        EventListener.OnDoPause += ticket => AudioService?.PauseAudioTicketAsync(ticket!) ?? Task.CompletedTask;
+        EventListener.OnDoStop += ticket => AudioService?.DisposeAudioTicketAsync(ticket!) ?? Task.CompletedTask;
+        EventListener.OnDoSeek += (position, ticket) =>
+        {
+            if (AudioService is IAudioTicketSeekableService seekableService)
+                return seekableService.SeekAudioTicket(ticket!, position);
+            return Task.CompletedTask;
+        };
+        EventListener.OnDoChangeVolume += volume =>
+        {
+            if (AudioService is IVolumeChangeableService volumeChangeableService)
+                return volumeChangeableService.ChangeVolume(volume);
+            return Task.CompletedTask;
+        };
+        EventListener.OnDoMoveTo += index =>
+        {
+            MovePointerTo(index,true);
+            return Task.CompletedTask;
+        };
     }
 
     #region Basic Information
@@ -127,6 +149,8 @@ public class PlayCore : INotifyPropertyChanged
 
     public AudioTicketBase NowPlayingTicket;
 
+    public readonly AudioServiceStatus AudioServiceStatus;
+    
     /// <summary>
     /// 播放设置 (废弃)
     /// </summary>
@@ -158,7 +182,7 @@ public class PlayCore : INotifyPropertyChanged
     {
         if (AudioService != null)
             _ = AudioService.DisposeServiceAsync(EventListener);
-        await AudioServiceBases[audioServiceId].InitializeService(EventListener);
+        await AudioServiceBases[audioServiceId].InitializeService(EventListener,AudioServiceStatus);
         AudioService = AudioServiceBases[audioServiceId];
     }
 
@@ -166,10 +190,10 @@ public class PlayCore : INotifyPropertyChanged
     /// 注册播放控制器
     /// </summary>
     /// <param name="playControllerBase">播放控制器</param>
-    public Task RegisterPlayControllerAsync(PlayControllerBase playControllerBase)
+    public Task RegisterPlayController(PlayControllerBase playControllerBase)
     {
         PlayControllers[playControllerBase.Id] = playControllerBase;
-        return playControllerBase.InitializeController(EventListener);
+        return playControllerBase.InitializeController(this);
     }
 
     /// <summary>
@@ -178,10 +202,19 @@ public class PlayCore : INotifyPropertyChanged
     /// <param name="playControllerId">播放控制器 Id</param>
     public void DisposePlayControllerById(string playControllerId)
     {
-        _ = PlayControllers[playControllerId].DisposeController(EventListener);
+        _ = PlayControllers[playControllerId].DisposeController(this);
         PlayControllers.Remove(playControllerId);
     }
 
+    /// <summary>
+    /// 注册一个音乐提供者
+    /// </summary>
+    /// <param name="musicProviderBase"></param>
+    public void RegisterMusicProvider(MusicProviderBase musicProviderBase)
+    {
+        MusicProviders[musicProviderBase.ProviderId] = musicProviderBase;
+    }
+    
     #endregion
 
     #region Play Control Function
@@ -342,14 +375,19 @@ public class PlayCore : INotifyPropertyChanged
     /// 移动当前播放指针到指定位置
     /// </summary>
     /// <param name="index">位置</param>
-    public async void MovePointerTo(int index)
+    public async void MovePointerTo(int index,bool fromController = false)
     {
         if (index < 0 || index >= PlayList.Count) return;
-        var args = new ChangePlayItemEventArgs(this, PlayList[NowPlayingIndex], PlayList[index], NowPlayingIndex,
+                var args = new ChangePlayItemEventArgs(this, PlayList!.GetValueOrDefault(NowPlayingIndex,null), PlayList!.GetValueOrDefault(index,null), NowPlayingIndex,
             index);
-        await EventListener.RaiseChangePlayItemBeforeEvent(args);
-        if (args.BreakEvent) return;
-        NowPlayingIndex = args.NewIndex;
+        if (!fromController)
+        {
+            await EventListener.RaiseChangePlayItemBeforeEvent(args);
+            if (args.BreakEvent) return;
+            index = args.NewIndex;
+        }
+        NowPlayingIndex = index;
+        NowPlayingSong = PlayList[index];
         await EventListener.RaiseChangePlayItemAfterEvent(args);
     }
 
@@ -368,7 +406,7 @@ public class PlayCore : INotifyPropertyChanged
     /// <summary>
     /// 移动指针到上一首歌曲
     /// </summary>
-    public async void MovePrevious()
+    public void MovePrevious()
     {
         if (PlayList.Count == 0) return;
         if (NowPlayingIndex - 1 < 0)
@@ -376,7 +414,7 @@ public class PlayCore : INotifyPropertyChanged
         else
             MovePointerTo(NowPlayingIndex - 1);
     }
-    
+
     /// <summary>
     /// 替换当前播放来源
     /// </summary>
@@ -389,26 +427,29 @@ public class PlayCore : INotifyPropertyChanged
         PlayListSource = newSource;
         await EventListener.RaiseChangePlaySourceAfterEvent(args);
     }
-    
+
     /// <summary>
     /// 加载当前的播放源
     /// </summary>
     public async void LoadPlaySource()
     {
         PlayList.Clear();
-        if (PlayListSource is LinerSongContainerBase linerSongContainerBase)
+        switch (PlayListSource)
         {
-            var items = await linerSongContainerBase.GetContainerItems();
-            AppendSingleSongRange(items);
-        }
-        else if (PlayListSource is ProgressiveSongContainer progressiveSongContainer)
-        {
-            var items = await progressiveSongContainer.GetNextItems();
-            AppendSingleSongRange(items);
-        }
-        else
-        {
-            throw new NotImplementedException();
+            case LinerSongContainerBase linerSongContainerBase:
+            {
+                var items = await linerSongContainerBase.GetContainerItems();
+                AppendSingleSongRange(items);
+                break;
+            }
+            case ProgressiveSongContainer progressiveSongContainer:
+            {
+                var items = await progressiveSongContainer.GetNextItems();
+                AppendSingleSongRange(items);
+                break;
+            }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(PlayListSource));
         }
     }
 
@@ -420,19 +461,21 @@ public class PlayCore : INotifyPropertyChanged
         var args = new LoadNowPlayingItemMediaEventArgs(this, PlayList[NowPlayingIndex]);
         await EventListener.RaiseLoadNowPlayingItemMediaBeforeEvent(args);
         if (args.BreakEvent) return;
-        if (AudioService is IMediaSourceProvidable mediaSourceProvidable)
+        if (MusicProviders[PlayList[NowPlayingIndex].ProviderId] is IMediaSourceProvidable mediaSourceProvidable)
         {
             var mediaSource = await mediaSourceProvidable.GetMediaSource(PlayList[NowPlayingIndex]);
             NowPlayingTicket = await AudioService.GetAudioTicketAsync(mediaSource);
+            AudioService.SetMainAudioTicket(NowPlayingTicket);
         }
+        await EventListener.RaiseLoadNowPlayingItemMediaAfterEvent(args);
     }
-    
+
     /// <summary>
     /// 播放当前歌曲
     /// </summary>
     public async Task Play()
     {
-        var args = new AudioTicketOperationEventArgs(this,NowPlayingTicket);
+        var args = new AudioTicketOperationEventArgs(this, NowPlayingTicket);
         await EventListener.RaisePlayBeforeEvent(args);
         if (args.BreakEvent) return;
         await AudioService.PlayAudioTicketAsync(NowPlayingTicket);
@@ -444,23 +487,38 @@ public class PlayCore : INotifyPropertyChanged
     /// </summary>
     public async Task Pause()
     {
-        var args = new AudioTicketOperationEventArgs(this,NowPlayingTicket);
+        var args = new AudioTicketOperationEventArgs(this, NowPlayingTicket);
         await EventListener.RaisePauseBeforeEvent(args);
         if (args.BreakEvent) return;
         await AudioService.PauseAudioTicketAsync(NowPlayingTicket);
+        AudioServiceStatus.PlayStatus = PlayStatus.Paused;
         await EventListener.RaisePauseAfterEvent(args);
     }
-    
+
     /// <summary>
     /// 停止当前歌曲
     /// </summary>
     public async Task Stop()
     {
-        var args = new AudioTicketOperationEventArgs(this,NowPlayingTicket);
+        var args = new AudioTicketOperationEventArgs(this, NowPlayingTicket);
         await EventListener.RaiseStopBeforeEvent(args);
         if (args.BreakEvent) return;
         await AudioService.DisposeAudioTicketAsync(NowPlayingTicket);
         await EventListener.RaiseStopAfterEvent(args);
+    }
+
+    /// <summary>
+    /// 更改 AudioTicket 进度
+    /// </summary>
+    /// <param name="position">进度</param>
+    public async Task Seek(TimeSpan position)
+    {
+        if (AudioService is not IAudioTicketSeekableService seekableService) return;
+        var args = new AudioTicketSeekOperationEventArgs(this, NowPlayingTicket, position);
+        await EventListener.RaiseSeekBeforeEvent(args);
+        if (args.BreakEvent) return;
+        await seekableService.SeekAudioTicket(NowPlayingTicket, position);
+        await EventListener.RaiseSeekAfterEvent(args);
     }
 
     #endregion
@@ -468,7 +526,7 @@ public class PlayCore : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     [NotifyPropertyChangedInvocator]
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

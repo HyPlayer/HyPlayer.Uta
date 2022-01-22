@@ -20,3 +20,23 @@ public abstract class MusicProviderBase
     /// </summary>
     public Dictionary<string, string> Types = new();
 }
+
+/// <summary>
+/// 音乐媒体源
+/// </summary>
+public class MusicMediaSource
+{
+    public string Url;
+    public bool IsLocal;
+    public object RealSource;
+    public long BitRate;
+    public string FileExtension;
+}
+
+public enum MediaQuality
+{
+    Low,
+    Normal,
+    High,
+    Lossless
+}

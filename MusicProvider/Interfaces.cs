@@ -31,7 +31,7 @@ public interface ITranslatedLyricProvidable
 /// <summary>
 /// 可根据 InProviderId 获取 ProvidableItem
 /// </summary>
-public interface IProvidableItemConstructable
+public interface IProvidableItemProvidable
 {
     /// <summary>
     /// 根据 InProviderId 获取 ProvidableItem
@@ -78,7 +78,7 @@ public interface IMediaSourceProvidable
     /// </summary>
     /// <param name="singleSongBase">单曲</param>
     /// <returns>播放源 (建议为 MediaSource)</returns>
-    public Task<object> GetMediaSource(SingleSongBase singleSongBase);
+    public Task<MusicMediaSource> GetMediaSource(SingleSongBase singleSongBase);
 }
 
 /// <summary>

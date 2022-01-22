@@ -18,6 +18,11 @@ public abstract class SingleSongBase : ProvidableItemBase
     public List<ArtistBase> Artists;
     
     /// <summary>
+    /// 艺术家显示文本
+    /// </summary>
+    public string ArtistString => string.Join(" / ", Artists.Select(x => x.Name));
+    
+    /// <summary>
     /// 歌曲简介
     /// </summary>
     public string Description;
